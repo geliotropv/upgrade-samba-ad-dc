@@ -1,26 +1,19 @@
-FROM azul/zulu-openjdk:17
+FROM debian:stretch
 
-ARG RUN_UID=1000
+ENV DEBIAN_FRONTEND=noninteractive
 
-ENV DOCKER_DISPLAY_NAME jdk17-ci-docker-v1
-# Never ask for confirmations
-ENV DEBIAN_FRONTEND noninteractive
-# Installing packages
-RUN rm -rf /var/lib/apt/lists/* && \
-  apt-get update -yqq && \
-  apt-get install -y --no-install-recommends git docker.io && \
-  rm -rf /var/lib/apt/lists/* && \
-  apt-get autoclean && \
-  apt-get clean
+RUN apt-get update && \
+	apt-get -y install attr krb5-config krb5-user ldap-utils libnss-winbind libpam-krb5 libpam-winbind samba winbind && \
+	rm -f /etc/samba/smb.conf
 
-# Add build user account, values are set to default below
-ENV RUN_USER ci
-RUN id $RUN_USER || adduser --uid $RUN_UID \
-    --gecos 'Build User' \
-    --shell '/bin/sh' \
-    --disabled-login \
-    --disabled-password "$RUN_USER"
+COPY entrypoint.sh /entrypoint.sh
+COPY create-users.sh /create-users.sh
+COPY default_user /default_user
 
-ENV HOME /home/$RUN_USER
+RUN chmod 755 /entrypoint.sh /create-users.sh && \
+	apt-get clean && \
+	rm -rf /var/lib/apt/lists
 
-USER $RUN_USER
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["samba"]
