@@ -3,7 +3,7 @@ name: publish
 on: [push]
 
 jobs:
-  publish-hello-world-image:
+  upgrade-samba-ad-dc:
     runs-on: ubuntu-latest
 
     steps:
