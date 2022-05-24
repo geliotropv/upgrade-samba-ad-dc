@@ -1,0 +1,23 @@
+apiVersion: skaffold/v2beta28
+kind: Config
+metadata:
+  name: mcf-backend
+build:
+  artifacts:
+    - image: dreg.citc.ru/ru.fcb.mobilefieldcollection.backend/mfc-backend
+      jib: {}
+  local:
+    push: false
+deploy:
+  kustomize:
+    paths:
+      - k8s/dev
+profiles:
+  - name: depsOnly
+    patches:
+      - op: remove
+        path: /build
+    deploy:
+      kustomize:
+        paths:
+          - k8s/dependencies
