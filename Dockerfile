@@ -1,29 +1,19 @@
-FROM ubuntu:trusty
+FROM azul/zulu-openjdk:17
 
-RUN DEP_MODULES="acl attr autoconf bison build-essential \
-        debhelper dnsutils docbook-xml docbook-xsl flex gdb krb5-user \
-        libacl1-dev libaio-dev libattr1-dev libblkid-dev \
-        libcap-dev libcups2-dev libgnutls-dev libjson-perl \
-        libldap2-dev libncurses5-dev libpam0g-dev libparse-yapp-perl \
-        libpopt-dev libreadline-dev perl perl-modules pkg-config \
-        python-all-dev python-dev python-dnspython python-crypto \
-        xsltproc zlib1g-dev wget" && \
-    apt-get update && \
-    apt-get install -y $DEP_MODULES
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN wget https://download.samba.org/pub/samba/stable/samba-4.6.6.tar.gz && \
-    tar xzvf samba-4.6.6.tar.gz && \
-    cd samba-4.6.6 && \
-    ./configure --prefix=/usr/local/samba --enable-selftest --sysconfdir=/etc/samba --with-ldap --with-ads --with-winbind && \
-    make -j4 && \
-    make install
+RUN apt-get update && \
+	apt-get -y install attr krb5-config krb5-user ldap-utils libnss-winbind libpam-krb5 libpam-winbind samba winbind && \
+	rm -f /etc/samba/smb.conf
 
-ENV PATH=/usr/local/samba/bin:/usr/local/samba/sbin:$PATH
+COPY entrypoint.sh /entrypoint.sh
+COPY create-users.sh /create-users.sh
+COPY default_user /default_user
 
-VOLUME ["/var/lib/samba", "/etc/samba"]
-
-ADD entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod 755 /entrypoint.sh /create-users.sh && \
+	apt-get clean && \
+	rm -rf /var/lib/apt/lists
 
 ENTRYPOINT ["/entrypoint.sh"]
+
 CMD ["samba"]
