@@ -22,8 +22,8 @@ ENV PATH=/usr/local/samba/bin:/usr/local/samba/sbin:$PATH
 
 VOLUME ["/var/lib/samba", "/etc/samba"]
 
-ADD docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+ADD entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["samba"]
