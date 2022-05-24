@@ -1,4 +1,4 @@
-FROM azul/zulu-openjdk:17
+FROM ubuntu:18.04
 
 ARG RUN_UID=1000
 
