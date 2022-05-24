@@ -1,26 +1,29 @@
-FROM ubuntu:18.04
+FROM ubuntu:trusty
 
-ARG RUN_UID=1000
+RUN DEP_MODULES="acl attr autoconf bison build-essential \
+        debhelper dnsutils docbook-xml docbook-xsl flex gdb krb5-user \
+        libacl1-dev libaio-dev libattr1-dev libblkid-dev \
+        libcap-dev libcups2-dev libgnutls-dev libjson-perl \
+        libldap2-dev libncurses5-dev libpam0g-dev libparse-yapp-perl \
+        libpopt-dev libreadline-dev perl perl-modules pkg-config \
+        python-all-dev python-dev python-dnspython python-crypto \
+        xsltproc zlib1g-dev wget" && \
+    apt-get update && \
+    apt-get install -y $DEP_MODULES
 
-ENV DOCKER_DISPLAY_NAME jdk17-ci-docker-v1
-# Never ask for confirmations
-ENV DEBIAN_FRONTEND noninteractive
-# Installing packages
-RUN rm -rf /var/lib/apt/lists/* && \
-  apt-get update -yqq && \
-  apt-get install -y --no-install-recommends git docker.io && \
-  rm -rf /var/lib/apt/lists/* && \
-  apt-get autoclean && \
-  apt-get clean
+RUN wget https://download.samba.org/pub/samba/stable/samba-4.6.6.tar.gz && \
+    tar xzvf samba-4.6.6.tar.gz && \
+    cd samba-4.6.6 && \
+    ./configure --prefix=/usr/local/samba --enable-selftest --sysconfdir=/etc/samba --with-ldap --with-ads --with-winbind && \
+    make -j4 && \
+    make install
 
-## Add build user account, values are set to default below
-#ENV RUN_USER ci
-#RUN id $RUN_USER || adduser --uid $RUN_UID \
-#    --gecos 'Build User' \
-#    --shell '/bin/sh' \
-#    --disabled-login \
-#    --disabled-password "$RUN_USER"
-#
-#ENV HOME /home/$RUN_USER
-#
-#USER $RUN_USER
+ENV PATH=/usr/local/samba/bin:/usr/local/samba/sbin:$PATH
+
+VOLUME ["/var/lib/samba", "/etc/samba"]
+
+ADD docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["samba"]
